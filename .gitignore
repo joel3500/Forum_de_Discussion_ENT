@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.env
+.env
+.venv/
+venv/
+build/
+dist/
+
+# SQLite local
+forum.sqlite
+forum.sqlite-shm
+forum.sqlite-wal
+
+# OS
+.DS_Store
+
+# Render
+.render/

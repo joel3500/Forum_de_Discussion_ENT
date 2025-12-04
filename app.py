@@ -246,6 +246,12 @@ def index():
         user=current_user()
     )
 
+
+@app.route('/healthz')
+def healthz():
+    return "ok", 200
+
+
 # app.py (dans view_topic)
 # Affichage d'un sujet + arborescence des commentaires ---------------
 @app.route('/sujet/<int:topic_id>')
