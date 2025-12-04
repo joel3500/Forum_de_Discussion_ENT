@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Modifier le sujet{% endblock %}
+{% block content %}
+<h3>Modifier le sujet</h3>
+<form method="post" class="row g-3" style="max-width:760px;">
+  <div class="col-12">
+    <label class="form-label">Titre</label>
+    <input type="text" name="titre" class="form-control" value="{{ sujet.titre }}" required>
+  </div>
+  <div class="col-12">
+    <label class="form-label">Énoncé</label>
+    <textarea name="contenu" class="form-control" rows="6" required>{{ sujet.contenu }}</textarea>
+  </div>
+  <div class="col-12 d-flex gap-2">
+    <button class="btn btn-warning">Enregistrer</button>
+    <a class="btn btn-light" href="{{ url_for('view_topic', topic_id=sujet.id) }}">Annuler</a>
+  </div>
+</form>
+{% endblock %}

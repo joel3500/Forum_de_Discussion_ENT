@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}Sujet — {{ sujet.titre }}{% endblock %}
+
+{% block content %}
+<h2 class="mb-2">{{ sujet.titre }}</h2>
+<p class="text-muted">par {{ sujet.nom }} — {{ sujet.created_at }}</p>
+<div class="mb-4">{{ sujet.contenu }}</div>
+
+<!-- Formulaire: ajouter un commentaire racine -->
+<div class="card mb-4">
+  <div class="card-body">
+    <h6>Ajouter un commentaire</h6>
+    {% if not user %}
+      <p class="text-muted">Connecte-toi pour commenter.</p>
+      <a class="btn btn-sm btn-primary" href="{{ url_for('login') }}">Se connecter</a>
+      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('register') }}">Créer un compte</a>
+    {% else %}
+      <form action="{{ url_for('commenter', topic_id=sujet.id) }}" method="post" class="row g-2">
+        <div class="col-md-4">
+          <input class="form-control" name="nom" value="{{ user.nom }}" required>
+        </div>
+        <input type="hidden" name="country" id="country">
+        <input type="hidden" name="city" id="city">
+        <div class="col-md-8">
+          <textarea class="form-control" name="contenu" rows="2" placeholder="Ton commentaire..." required></textarea>
+        </div>
+        <div class="col-12">
+          <button class="btn btn-success btn-sm" type="submit">Publier</button>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<h5 class="mb-3">Commentaires</h5>
+
+{% macro render_comment(node, depth=0) %}
+  <div class="card mb-2" style="margin-left: {{ depth * 16 }}px;">
+    <div class="card-body">
+      <div class="d-flex justify-content-between">
+        <div>
+          <strong>{{ node.nom }}</strong>
+          <small class="timestamp"> — {{ node.created_at }}</small>
+          {% if node.city %}<small class="text-muted"> • {{ node.city }}</small>{% endif %}
+        </div>
+        {% if user and (user.is_admin == "yes" or (node.user and user.id == node.user.id)) %}
+          <div class="d-flex gap-1">
+            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#edit{{ node.id }}">Modifier</button>
+            <form action="{{ url_for('delete_comment', comment_id=node.id) }}" method="post"
+                  onsubmit="return confirm('Supprimer ce commentaire et ses réponses ?');" style="display:inline;">
+              <button class="btn btn-sm btn-outline-danger">Supprimer</button>
+            </form>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="mt-2">{{ node.contenu }}</div>
+
+      {% if user %}
+      <div class="mt-2">
+        <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#reply{{ node.id }}">Répondre</button>
+      </div>
+      <div class="collapse mt-2" id="reply{{ node.id }}">
+        <form action="{{ url_for('repondre', parent_id=node.id) }}" method="post" class="row g-2">
+          <div class="col-md-4"><input class="form-control" name="nom" value="{{ user.nom }}" required></div>
+          <input type="hidden" name="country" value="">
+          <input type="hidden" name="city" value="">
+          <div class="col-md-8"><textarea class="form-control" name="contenu" rows="2" placeholder="Répondre..." required></textarea></div>
+          <div class="col-12"><button class="btn btn-sm btn-primary">Envoyer</button></div>
+        </form>
+      </div>
+      {% endif %}
+
+      <!-- Édition -->
+      <div class="collapse mt-2" id="edit{{ node.id }}">
+        <form action="{{ url_for('edit_comment', comment_id=node.id) }}" method="post" class="row g-2">
+          <div class="col-12"><textarea class="form-control" name="contenu" rows="3" required>{{ node.contenu }}</textarea></div>
+          <div class="col-12"><button class="btn btn-sm btn-warning">Valider</button></div>
+        </form>
+      </div>
+
+      <!-- Enfants -->
+      {% for child in node._kids %}
+        {{ render_comment(child, depth+1) }}
+      {% endfor %}
+    </div>
+  </div>
+{% endmacro %}
+
+{% if roots and roots|length %}
+  {% for root in roots %}
+    {{ render_comment(root) }}
+  {% endfor %}
+{% else %}
+  <p class="text-muted">Aucun commentaire. Lance la discussion !</p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Récupération ville/pays (optionnel)
+(async function(){
+  try {
+    const r = await fetch('https://ipapi.co/json/');
+    if (!r.ok) return;
+    const j = await r.json();
+    const c = document.getElementById('country');
+    const v = document.getElementById('city');
+    if (c) c.value = j.country_name || j.country || '';
+    if (v) v.value = j.city || '';
+  } catch(e){}
+})();
+</script>
+{% endblock %}

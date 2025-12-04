@@ -1,0 +1,28 @@
+Forum de Discussion 
+
+- Je veux produire la page forum_de_discussion.html. 
+- Le thème c'est l'entrepreunariat. 
+- Interface Responsive (téléphone - PC) 
+- Il s'agira d'un forum dans lequel tout le monde peut interagir. 
+- De préference utiliser une ORM comme Peewee et PostgreSQL pour la base de données.
+- Si PostgreSQL ne fonctionne pas, basculer automatiquement sur SQLite. 
+- Flask, MVC avec render_templates. 
+- Une page index contient la Liste des sujets s'il y en a. 
+- Utilise les images du fichier .zip pour la page index. 
+- l'image principale est identifiée dans le fichier image_principale_ent
+- Celle-ci contient une image principale (width: 100%, height:70px).
+- Lorsqu'on clicke sur un sujet, on se rend sur la page de ce sujet. 
+- Tout visiteur peut demarrer un sujet : 
+Il doit remplir 3 cases : 1) nom complet, 2) titre du sujet, 3) ennoncé. 
+- Tout visiteur peut commenter sur un sujet. 
+Il doit remplir 2 cases : 1) nom complet, 2) commentaire. 
+- Tout visiteur peut repondre èa un commentaire. 
+Il doit remplir 2 cases : 1) nom complet, 2) commentaire. 
+- Lorsque le commentaire est soumis, l'interface doit pouvoir afficher le drapeau du pays, et la ville d'ou le commentaire a été emis. 
+- On doit voir l'heure èa laquelle un commentaire a été soumis. 
+- Un visiteur peut modifier son commentaire èa tout moment. 
+- Un visiteur peut supprimer son commentaire èa tout moment. 
+- Une page actualites.html qui fonctionne avec une IA, qui nous renseigne sur les prochaines evenements, rencontres, conférences, foires, 5 èa 7, ... autour de l'entrepreunariat au Saguenay.
+- Dans le footer, mettre Tous droits réservés. Forum créé par Joel Sandé, Finissant au Bac en Informatique.
+
+Fait le plus simple possible.

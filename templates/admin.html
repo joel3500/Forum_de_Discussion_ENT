@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Admin{% endblock %}
+{% block content %}
+<h3>Panneau Admin</h3>
+
+<!-- =================== Sujets =================== -->
+<h5 class="mt-3">Sujets</h5>
+<div class="list-group mb-3">
+  {% for s in sujets %}
+    <div class="list-group-item d-flex justify-content-between align-items-center">
+      <div>
+        <strong>#{{ s.id }} — {{ s.titre }}</strong>
+        <div class="text-muted small">par {{ s.nom }} • {{ s.created_at }}</div>
+      </div>
+      <form method="post" action="{{ url_for('admin_delete_topic', topic_id=s.id) }}"
+            onsubmit="return confirm('Supprimer ce sujet ET tous ses commentaires ?');">
+        <button class="btn btn-sm btn-danger">Supprimer</button>
+      </form>
+    </div>
+  {% endfor %}
+</div>
+
+<!-- on affiche tous les commentaires (racines + réponses) dans la même liste, 
+     avec un badge indiquant si c’est une réponse ou un niveau 1. -->
+<!-- =================== Commentaires (tous niveaux) =================== -->
+<h5>Commentaires récents (tous niveaux)</h5>
+<div class="list-group mb-3">
+  {% for c in comments %}
+    <div class="list-group-item d-flex justify-content-between align-items-center">
+      <div>
+        <strong>#{{ c.id }}</strong>
+        {% if c.parent_id %}
+          <span class="badge text-bg-secondary">réponse à #{{ c.parent_id }}</span>
+        {% else %}
+          <span class="badge text-bg-info">niveau 1</span>
+        {% endif %}
+        — {{ c.contenu|truncate(120) }}
+        <div class="text-muted small">
+          Sujet #{{ c.topic.id }} • {{ c.nom }} • {{ c.created_at }}
+          {% if c.city %} • {{ c.city }}{% endif %}
+        </div>
+      </div>
+      <form method="post" action="{{ url_for('admin_delete_comment', comment_id=c.id) }}"
+            onsubmit="return confirm('Supprimer ce commentaire et toute sa sous-branche ?');">
+        <button class="btn btn-sm btn-danger">Supprimer</button>
+      </form>
+    </div>
+  {% endfor %}
+</div>
+
+<!-- =================== Utilisateurs =================== -->
+<h5>Utilisateurs</h5>
+<ul class="list-group">
+  {% for u in users %}
+    <li class="list-group-item">
+      <strong>#{{ u.id }} {{ u.nom }}</strong> — {{ u.email }}
+      {% if u.is_admin == "yes" %}<span class="badge text-bg-dark">admin</span>{% endif %}
+    </li>
+  {% endfor %}
+</ul>
+{% endblock %}

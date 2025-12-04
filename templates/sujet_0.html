@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}{{ sujet.titre }}{% endblock %}
+
+{% block content %}
+    <div class="mb-3">
+      <a href="{{ url_for('index') }}" class="link-secondary">&larr; Retour aux sujets</a>
+      <h2>{{ sujet.titre }}</h2>
+
+      {% if user and (user.is_admin == "yes" or (sujet.user and user.id == sujet.user.id)) %}
+        <div class="mb-2">
+          <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('edit_topic', topic_id=sujet.id) }}">Modifier le sujet</a>
+          <form method="post" action="{{ url_for('delete_topic', topic_id=sujet.id) }}" style="display:inline;" onsubmit="return confirm('Supprimer ce sujet et tous ses commentaires ?');">
+            <button class="btn btn-sm btn-outline-danger">Supprimer le sujet</button>
+          </form>
+        </div>
+      {% endif %} 
+      
+      <p class="text-muted">par {{ sujet.nom }} • <small class="timestamp">{{ sujet.created_at }}</small></p>
+      <div class="mb-4">{{ sujet.contenu }}</div>
+    </div>
+
+    <!-- Form commentaire -->
+    <div class="card mb-3">
+      <div class="card-body">
+        <h6>Ajouter un commentaire</h6>
+        {% if not user %}
+          <p class="text-muted">Connecte-toi pour commenter.</p>
+          <a class="btn btn-sm btn-primary" href="{{ url_for('login') }}">Se connecter</a>
+          <a class="btn btn-sm btn-outline-primary" href="{{ url_for('register') }}">Créer un compte</a>
+        {% else %}
+          <form id="commentForm" action="{{ url_for('commenter', topic_id=sujet.id) }}" method="post" class="row g-2">
+            <div class="col-md-4">
+              <input class="form-control" name="nom" placeholder="Ton nom complet" value="{{ user.nom }}" required>
+            </div>
+            <input type="hidden" name="country" id="country">
+            <input type="hidden" name="city" id="city">
+            <div class="col-md-8">
+              <textarea class="form-control" name="contenu" rows="2" placeholder="Ton commentaire..." required></textarea>
+            </div>
+            <div class="col-12">
+              <button class="btn btn-success" type="submit">Publier</button>
+            </div>
+          </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Liste commentaires -->
+    <div>
+      <h5>Commentaires</h5>
+        {% for c in comments %}
+            <div class="card mb-2">
+              <div class="card-body">
+                <div class="d-flex justify-content-between">
+                  
+                  <div>
+                    <strong>{{ c.nom }}</strong>
+                    <small class="timestamp"> — {{ c.created_at }}</small>
+                    {% if c.city %} <small class="text-muted"> • {{ c.city }}</small>{% endif %}
+                  </div>
+
+                  <div>
+                    {% if user and (user.is_admin == "yes" or (c.user and user.id == c.user.id)) %}
+                      <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="collapse" data-bs-target="#editForm{{ c.id }}">Modifier</button>
+                      <button class="btn btn-sm btn-outline-danger" data-bs-toggle="collapse" data-bs-target="#deleteForm{{ c.id }}">Supprimer</button>
+                    {% endif %}
+                  </div>
+
+                </div>
+
+                <div class="mt-2">{{ c.contenu }}</div>
+
+                <!-- reply form (auth only) -->
+                {% if user %}
+                <div class="mt-2">
+                  <button class="btn btn-sm btn-outline-primary" data-bs-toggle="collapse" data-bs-target="#replyForm{{ c.id }}">Répondre</button>
+                </div>
+                <div class="collapse mt-2" id="replyForm{{ c.id }}">
+                  <form action="{{ url_for('repondre', comment_id=c.id) }}" method="post" class="row g-2">
+                    <div class="col-md-4"><input class="form-control" name="nom" value="{{ user.nom }}" required></div>
+                    <input type="hidden" name="country" value="">
+                    <input type="hidden" name="city" value="">
+                    <div class="col-md-8"><textarea class="form-control" name="contenu" rows="2" placeholder="Réponse..." required></textarea></div>
+                    <div class="col-12"><button class="btn btn-sm btn-primary" type="submit">Envoyer</button></div>
+                  </form>
+                </div>
+                {% endif %}
+
+                <!-- edit form -->
+                <div class="collapse mt-2" id="editForm{{ c.id }}">
+                  <form action="{{ url_for('edit_comment', comment_id=c.id) }}" method="post" class="row g-2">
+                    <div class="col-12">
+                      <textarea class="form-control" name="contenu" rows="3" required>{{ c.contenu }}</textarea>
+                    </div>
+                    <div class="col-12">
+                      <button class="btn btn-sm btn-warning" type="submit">Valider modification</button>
+                    </div>
+                  </form>
+                </div>
+
+                <!-- delete form -->
+                <div class="collapse mt-2" id="deleteForm{{ c.id }}">
+                  <form action="{{ url_for('delete_comment', comment_id=c.id) }}" method="post" class="row g-2">
+                    <div class="col-12">
+                      <button class="btn btn-sm btn-danger" type="submit">Confirmer suppression</button>
+                    </div>
+                  </form>
+                </div>
+
+                <!-- replies -->
+                <div class="mt-3">
+                  {% for r in c.replies.order_by(Reply.created_at.desc()) %}
+                      <div class="reply card p-2 mb-2">
+                          <div><strong>{{ r.nom }}</strong> <small class="timestamp">• {{ r.created_at }}</small> {% if r.city %} <small class="text-muted"> • {{ r.city }}</small>{% endif %}</div>
+                          <div>{{ r.contenu }}</div>
+                      </div>
+                  {% endfor %}
+                </div>
+
+              </div>
+            </div>
+        {% else %}
+          <p class="text-muted">Aucun commentaire pour l'instant. Lance la discussion !</p>
+        {% endfor %}
+    </div>
+
+    {% block scripts %}
+        <script>
+        // Récupération ville/pays
+        async function fillGeoFields() {
+          try {
+            const resp = await fetch('https://ipapi.co/json/');
+            if (!resp.ok) return;
+            const j = await resp.json();
+            const country = j.country_name || j.country || '';
+            const city = j.city || '';
+            const countryInput = document.getElementById('country');
+            const cityInput = document.getElementById('city');
+            if (countryInput) countryInput.value = country;
+            if (cityInput) cityInput.value = city;
+          } catch (e) {}
+        }
+        fillGeoFields();
+        </script>
+    {% endblock %}  
+
+{% endblock %}
+

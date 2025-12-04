@@ -1,0 +1,40 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: forum_user
+      POSTGRES_PASSWORD: forum_pass
+      POSTGRES_DB: forumdb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forum_user"]
+      interval: 5s
+      retries: 10
+
+  web:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    environment:
+      # point to Postgres container (compose provides DNS 'db')
+      DATABASE_URL: "postgres://forum_user:forum_pass@db:5432/forumdb"
+      SECRET_KEY: "change_me_for_prod"
+      IMAGE_DIR: "/app/static/images"
+      IMAGE_PRINCIPALE: "image_principale_ent.jpg"
+      FLASK_ENV: "production"
+      FLASK_APP: "app.py"
+      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+    volumes:
+      # monte un dossier local images (pratique pour test / dev) :
+      - ./static/images:/app/static/images
+      # si tu veux persister sqlite (fallback) : 
+      - ./data:/app
+    restart: unless-stopped
+
+volumes:
+  pgdata:

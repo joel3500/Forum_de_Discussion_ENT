@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Forum - Sujets{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+  {% if main_image %}
+    <img src="{{ main_image }}" alt="image principale" class="main-image mb-3">
+  {% endif %}
+  <h4>UQAC : Forum des passionnés d'Entrepreneuriat</h4>
+  <p class="text-muted">Capacité èa entreprendre, Créativité, Marketing digital, Management, ... Partage tes idées, demande des conseils, trouve des partenaires — tout le monde peut participer.</p>
+</div>
+
+<!-- ===================== Formulaire création sujet ===================== -->
+<div class="card mb-4">
+  <div class="card-body">
+    <h5>Démarrer un nouveau sujet</h5>
+
+    {% if not user %}
+      <p class="text-muted mb-2">Connecte-toi pour créer un sujet.</p>
+      <a class="btn btn-sm btn-primary" href="{{ url_for('login') }}">Se connecter</a>
+      <a class="btn btn-sm btn-outline-primary" href="{{ url_for('register') }}">Créer un compte</a>
+    {% else %}
+      <form action="{{ url_for('nouveau_sujet') }}" method="post" class="row g-2">
+        <div class="col-md-4">
+          <input class="form-control" name="nom" placeholder="Nom complet" value="{{ user.nom }}" required>
+        </div>
+        <div class="col-md-4">
+          <input class="form-control" name="titre" placeholder="Titre du sujet" required>
+        </div>
+        <div class="col-md-4">
+          <button class="btn btn-primary w-100" type="submit">Créer le sujet</button>
+        </div>
+        <div class="col-12 mt-2">
+          <textarea class="form-control" name="contenu" rows="3" placeholder="Énoncé..." required></textarea>
+        </div>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<!-- ======================= Barre de Filtre des sujets ======================= -->
+
+<div id="filter-bar" class="mb-3" style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+  <input id="topicFilter" type="text" class="form-control" placeholder="Filtrer les sujets (ex: cours)"
+         style="max-width:420px" autocomplete="off" />
+  <button id="clearFilter" type="button" class="btn btn-outline-secondary">Effacer</button>
+  <span id="matchCount" class="text-muted" style="margin-left:.5rem"></span>
+</div>
+
+<!-- ========================= Liste des sujets ========================= -->
+
+<div class="row" id="sujetsList">
+  {% if sujets and sujets|length > 0 %}
+    {% for s in sujets %}
+      <div class="col-12 col-md-6 mb-3">
+          <div class="card topic-card position-relative" onclick="location.href='{{ url_for('view_topic', topic_id=s.id) }}'">
+              <div class="row g-0">
+                  <!-- … ton contenu … -->
+                  <div class="col-8">
+                      <div class="card-body">
+                        <h5 class="card-title mb-1">{{ s.titre }}</h5>
+                        <p class="card-text text-truncate mb-1">{{ s.contenu }}</p>
+                        <p class="card-text">
+                          <small class="text-muted">par {{ s.nom }} — <span class="timestamp">{{ s.created_at }}</span></small>
+                        </p>
+                        <!-- Le lien qui rend toute la carte cliquable -->
+                        <a href="{{ url_for('view_topic', topic_id=s.id) }}" class="stretched-link"></a>
+                      </div>
+                  </div>
+              </div>
+          </div>
+
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="col-12">
+      <p class="text-muted">Aucun sujet pour l'instant. Sois le premier à lancer la discussion !</p>
+    </div>
+  {% endif %}
+</div>
+<!-- ==================================================================== -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+  const input = document.getElementById('topicFilter');
+  const clearBtn = document.getElementById('clearFilter');
+  const list  = document.getElementById('sujetsList');
+  const count = document.getElementById('matchCount');
+  if (!input || !list) return;
+
+  // Normaliser (ignore accents et casse)
+  const norm = s => (s||'').toString()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toLowerCase();
+
+  // Référence des cartes (titre + extrait)
+  // On cache la "col" qui contient chaque carte
+  const cards = Array.from(list.querySelectorAll('.card.topic-card')).map(card => {
+    const col = card.closest('.col, .col-12, .col-md-6') || card; // wrapper colonne
+    const title = card.querySelector('.card-title')?.textContent || '';
+    const snippet = card.querySelector('.card-text')?.textContent || '';
+    const haystack = norm(title + ' ' + snippet);
+    return { col, haystack };
+  });
+
+  function applyFilter(q){
+    const nq = norm(q);
+    let shown = 0;
+    cards.forEach(c => {
+      const match = !nq || c.haystack.includes(nq);
+      c.col.style.display = match ? '' : 'none';
+      if (match) shown++;
+    });
+    if (count) count.textContent = shown + ' sujet(s)';
+  }
+
+  // Déclencheurs
+  let t=null;
+  input.addEventListener('input', () => {
+    clearTimeout(t);
+    t = setTimeout(() => applyFilter(input.value), 120);
+  });
+
+  if (clearBtn) {
+    clearBtn.addEventListener('click', () => {
+      input.value = '';
+      applyFilter('');
+      input.focus();
+    });
+  }
+
+  // Init
+  applyFilter('');
+})();
+</script>
+{% endblock %}
+
