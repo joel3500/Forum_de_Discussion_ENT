@@ -27,15 +27,15 @@ from math import ceil
 from peewee import fn
 
 
-IMG_DIR = os.environ.get("IMG_DIR", "static/img")
+
 
 load_dotenv()
 initialize()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_key")
-#IMAGE_DIR = os.environ.get("IMAGE_DIR", "static/images")
-#IMAGE_PRINCIPALE = os.environ.get("IMAGE_PRINCIPALE", "image_principale_ent.jpg")
+IMG_DIR = os.environ.get("IMG_DIR", "static/img")
+IMAGE_PRINCIPALE = os.environ.get("IMAGE_PRINCIPALE", "image_principale_ent.jpeg")
 
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
 oai_client = None
