@@ -22,7 +22,7 @@ services:
       - "5000:5000"
     environment:
       # point to Postgres container (compose provides DNS 'db')
-      DATABASE_URL: "postgres://forum_user:forum_pass@db:5432/forumdb"
+      DATABASE_URL: "postgresql://forum_db_08ka_user:vlfOLLy9F6IwdgvxePIC5NqVOa34XKQ5@dpg-d4ohu47gi27c738gn7j0-a/forum_db_08ka"
       SECRET_KEY: "change_me_for_prod"
       IMAGE_DIR: "/app/static/img"
       IMAGE_PRINCIPALE: "image_principale_ent.jpg"
