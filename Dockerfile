@@ -26,4 +26,4 @@ ENV IMAGE_PRINCIPALE=image_principale_ent.jpg
 RUN mkdir -p /app/static/img
 
 # Entrypoint: ensure DB tables exist then start
-CMD ["sh", "-c", "python -c 'from models import initialize; initialize(); print(\"DB initialized\")' && python app.py --host=0.0.0.0"]
+CMD ["bash","-lc","gunicorn -w 3 -k gthread -b 0.0.0.0:$PORT app:app"]
