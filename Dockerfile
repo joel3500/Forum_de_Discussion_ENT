@@ -19,11 +19,11 @@ EXPOSE 5000
 # Default environment variables (can be overridden)
 ENV FLASK_ENV=production
 ENV FLASK_APP=app.py
-ENV IMAGE_DIR=/app/static/images
+ENV IMAGE_DIR=/app/static/img
 ENV IMAGE_PRINCIPALE=image_principale_ent.jpg
 
 # Create directory for images (user can mount here)
-RUN mkdir -p /app/static/images
+RUN mkdir -p /app/static/img
 
 # Entrypoint: ensure DB tables exist then start
 CMD ["sh", "-c", "python -c 'from models import initialize; initialize(); print(\"DB initialized\")' && python app.py --host=0.0.0.0"]

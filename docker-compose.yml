@@ -1,11 +1,11 @@
 version: "3.8"
 services:
   db:
-    image: postgres:15
+    image: postgres:18
     environment:
-      POSTGRES_USER: forum_user
-      POSTGRES_PASSWORD: forum_pass
-      POSTGRES_DB: forumdb
+      POSTGRES_USER: forum_db_08ka_user
+      POSTGRES_PASSWORD: vlfOLLy9F6IwdgvxePIC5NqVOa34XKQ5
+      POSTGRES_DB: forum_db_08ka
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -24,7 +24,7 @@ services:
       # point to Postgres container (compose provides DNS 'db')
       DATABASE_URL: "postgres://forum_user:forum_pass@db:5432/forumdb"
       SECRET_KEY: "change_me_for_prod"
-      IMAGE_DIR: "/app/static/images"
+      IMAGE_DIR: "/app/static/img"
       IMAGE_PRINCIPALE: "image_principale_ent.jpg"
       FLASK_ENV: "production"
       FLASK_APP: "app.py"

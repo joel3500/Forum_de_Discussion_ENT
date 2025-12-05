@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: forum-entrepreneuriat
+    name: Forum_de_Discussion_ENT
     env: python
     plan: starter    # choisis le plan
     region: oregon   # adapte
@@ -24,4 +24,4 @@ services:
 
 databases:
   - name: forum-db
-    plan: starter
+    plan: Basic-256mb
