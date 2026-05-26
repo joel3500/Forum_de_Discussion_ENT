@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block title %}{{ sujet.titre }}{% endblock %}
+
+{% block content %}
+
+{# ===================================================
+   Macro : avatar coloré
+   =================================================== #}
+{% macro avatar(nom, size=40) %}
+  {%- set palette = ['#1877F2','#42B72A','#E4405F','#F7B928','#9C27B0','#00ACC1'] -%}
+  {%- set idx = (nom|length) % 6 -%}
+  <div class="fb-avatar"
+       style="width:{{size}}px;height:{{size}}px;background:{{palette[idx]}};font-size:{{(size*0.4)|int}}px;flex-shrink:0">
+    {{- nom[:2]|upper if nom else '?' -}}
+  </div>
+{% endmacro %}
+
+{# ===================================================
+   Carte du sujet
+   =================================================== #}
+<div class="fb-card" style="margin-bottom:10px">
+  <div class="fb-post-header">
+    {{ avatar(sujet.nom, 44) }}
+    <div class="fb-post-meta">
+      <div class="fb-post-author">{{ sujet.nom }}</div>
+      <div class="fb-post-time">{{ sujet.created_at }}</div>
+    </div>
+    {% if user and (user.is_admin == "yes" or (sujet.user and user.id == sujet.user.id)) %}
+      <div class="dropdown">
+        <button class="fb-post-menu-btn" data-bs-toggle="dropdown">⋯</button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+          <li><a class="dropdown-item" href="{{ url_for('edit_topic', topic_id=sujet.id) }}">✏️ Modifier</a></li>
+          <li>
+            <form action="{{ url_for('delete_topic', topic_id=sujet.id) }}" method="post"
+                  onsubmit="return confirm('Supprimer ce sujet ?')">
+              <button type="submit" class="dropdown-item text-danger">🗑️ Supprimer</button>
+            </form>
+          </li>
+        </ul>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="fb-post-title">{{ sujet.titre }}</div>
+  <div class="fb-post-body">{{ sujet.contenu }}</div>
+
+  {# --- Médias du sujet --- #}
+  {% if topic_media and topic_media|length > 0 %}
+    {% set n    = topic_media|length %}
+    {% set show = [n, 4]|min %}
+    <div class="fb-media-grid n{{ show }}">
+      {% for m in topic_media[:show] %}
+        <div class="fb-media-item"
+             onclick="fbOpenLightbox(
+               '{{ url_for('static', filename='uploads/' + m.filename) }}',
+               '{{ m.media_type }}')">
+          {% if m.media_type == 'video' %}
+            <video src="{{ url_for('static', filename='uploads/' + m.filename) }}"
+                   preload="metadata" muted playsinline controls></video>
+          {% else %}
+            <img src="{{ url_for('static', filename='uploads/' + m.filename) }}"
+                 alt="Média {{ loop.index }}">
+          {% endif %}
+          {% if loop.last and n > 4 %}
+            <div class="fb-media-more-overlay">+{{ n - 4 }}</div>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <div class="fb-post-actions">
+    <a class="fb-action-btn" href="{{ url_for('index') }}">← Retour au forum</a>
+  </div>
+</div>
+
+{# ===================================================
+   Bloc commentaires
+   =================================================== #}
+<div class="fb-card">
+  <div class="fb-comments-wrap">
+    <p style="font-weight:700;font-size:15px;margin-bottom:12px">Commentaires</p>
+
+    {# Formulaire ajout commentaire #}
+    {% if not user %}
+      <p style="color:var(--fb-muted);font-size:14px;margin-bottom:12px">
+        <a href="{{ url_for('login') }}" style="color:var(--fb-blue);font-weight:700">Connecte-toi</a>
+        pour commenter.
+      </p>
+    {% else %}
+      <form action="{{ url_for('commenter', topic_id=sujet.id) }}" method="post">
+        <input type="hidden" name="country" id="country">
+        <input type="hidden" name="city"    id="city">
+        <div class="fb-comment-form-row">
+          {{ avatar(user.nom, 36) }}
+          <div class="fb-comment-input-wrap">
+            <textarea class="fb-comment-textarea" name="contenu" rows="1"
+                      placeholder="Écrire un commentaire..." required
+                      oninput="autoResize(this)"></textarea>
+            <button type="submit" class="fb-comment-send" title="Envoyer">➤</button>
+          </div>
+        </div>
+      </form>
+    {% endif %}
+
+    {# =====================================================
+       Macro récursive : affichage d'un commentaire + enfants
+       ===================================================== #}
+    {% macro render_comment(node, depth=0) %}
+      {%- set palette = ['#1877F2','#42B72A','#E4405F','#F7B928','#9C27B0','#00ACC1'] -%}
+      {%- set cidx = (node.nom|length) % 6 -%}
+      {%- set csz  = 34 if depth == 0 else 28 -%}
+
+      <div class="fb-comment-item">
+        {# Avatar #}
+        <div class="fb-avatar"
+             style="width:{{csz}}px;height:{{csz}}px;background:{{palette[cidx]}};
+                    font-size:{{(csz*0.4)|int}}px;flex-shrink:0;margin-top:2px">
+          {{- node.nom[:2]|upper if node.nom else '?' -}}
+        </div>
+
+        <div class="fb-comment-right">
+          {# Bulle principale #}
+          <div class="fb-comment-bubble">
+            <span class="fb-comment-author">{{ node.nom }}
+              {% if node.city %}
+                <span style="font-weight:400;color:var(--fb-muted)"> · {{ node.city }}</span>
+              {% endif %}
+            </span>
+            <div class="fb-comment-text">{{ node.contenu }}</div>
+          </div>
+
+          {# Actions sous la bulle #}
+          <div class="fb-comment-actions">
+            <span>{{ node.created_at }}</span>
+            {% if user %}
+              <button class="fb-comment-action-btn"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#reply{{ node.id }}">Répondre</button>
+            {% endif %}
+            {% if user and (user.is_admin == "yes" or (node.user and user.id == node.user.id)) %}
+              <button class="fb-comment-action-btn"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#edit{{ node.id }}">Modifier</button>
+              <form action="{{ url_for('delete_comment', comment_id=node.id) }}" method="post"
+                    style="display:inline"
+                    onsubmit="return confirm('Supprimer ce commentaire et ses réponses ?')">
+                <button type="submit" class="fb-comment-action-btn" style="color:var(--fb-red)">
+                  Supprimer
+                </button>
+              </form>
+            {% endif %}
+          </div>
+
+          {# Formulaire réponse (collapse) #}
+          {% if user %}
+            <div class="collapse mt-2" id="reply{{ node.id }}">
+              <form action="{{ url_for('repondre', parent_id=node.id) }}" method="post">
+                <input type="hidden" name="country" value="">
+                <input type="hidden" name="city"    value="">
+                {%- set uidx = (user.nom|length) % 6 -%}
+                <div class="fb-comment-form-row" style="margin-bottom:6px">
+                  <div class="fb-avatar"
+                       style="width:28px;height:28px;background:{{palette[uidx]}};font-size:11px;flex-shrink:0">
+                    {{- user.nom[:2]|upper -}}
+                  </div>
+                  <div class="fb-comment-input-wrap">
+                    <textarea class="fb-comment-textarea" name="contenu" rows="1"
+                              placeholder="Répondre à {{ node.nom }}..." required
+                              style="font-size:13px"
+                              oninput="autoResize(this)"></textarea>
+                    <button type="submit" class="fb-comment-send">➤</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          {% endif %}
+
+          {# Formulaire édition (collapse) #}
+          {% if user and (user.is_admin == "yes" or (node.user and user.id == node.user.id)) %}
+            <div class="collapse mt-2" id="edit{{ node.id }}">
+              <form action="{{ url_for('edit_comment', comment_id=node.id) }}" method="post">
+                <div class="fb-comment-input-wrap">
+                  <textarea class="fb-comment-textarea" name="contenu" rows="2" required
+                            style="padding-right:50px;border-radius:12px"
+                            oninput="autoResize(this)">{{ node.contenu }}</textarea>
+                  <button type="submit" class="fb-comment-send" style="font-size:12px">OK</button>
+                </div>
+              </form>
+            </div>
+          {% endif %}
+
+          {# Réponses imbriquées #}
+          {% if node._kids %}
+            <div class="fb-replies mt-2">
+              {% for child in node._kids %}
+                {{ render_comment(child, depth + 1) }}
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    {% endmacro %}
+
+    {# Affichage de tous les commentaires racines #}
+    {% if roots and roots|length %}
+      {% for root in roots %}
+        {{ render_comment(root) }}
+      {% endfor %}
+    {% else %}
+      <p style="color:var(--fb-muted);font-size:14px;text-align:center;padding:20px 0">
+        Aucun commentaire pour l'instant. Lance la discussion !
+      </p>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* Auto-resize textarea */
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
+}
+
+/* Géolocalisation (pays/ville pour les commentaires) */
+(async function () {
+  try {
+    const r = await fetch('https://ipapi.co/json/');
+    if (!r.ok) return;
+    const j = await r.json();
+    const c = document.getElementById('country');
+    const v = document.getElementById('city');
+    if (c) c.value = j.country_name || j.country || '';
+    if (v) v.value = j.city || '';
+  } catch (e) {}
+})();
+</script>
+{% endblock %}

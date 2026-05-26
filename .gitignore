@@ -1,0 +1,35 @@
+# Environnements virtuels
+venv/
+.venv/
+env/
+
+# Cache Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Données locales
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+
+# Variables d'environnement (ne jamais committer)
+.env
+.env.*
+
+# Médias uploadés par les utilisateurs (générés en prod)
+static/uploads/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Docker (optionnel, décommente si tu ne veux pas les committer)
+# docker-compose.override.yml
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db

@@ -1,0 +1,20 @@
+forum_entrepreneuriat/
+├─ app.py
+├─ models.py
+├─ utils.py
+├─ requirements.txt
+├─ Dockerfile
+├─ docker-compose.yml
+├─ start.sh
+├─ .env.example
+├─ static/
+│ ├─ css/
+│ │ └─ styles.css
+│ └─ img/
+│ └─ index/ # <- Dézippez ici vos images d'index (avant docker build)
+└─ templates/
+├─ base.html
+├─ index.html # liste des sujets + formulaire "Nouveau sujet"
+├─ actualites.html # page agrégée des événements (cache partagé)
+├─ forum_de_discussion.html# page d’un sujet (fil + commentaires + réponses)
+└─ _comment.html # fragment pour afficher un commentaire + réponses

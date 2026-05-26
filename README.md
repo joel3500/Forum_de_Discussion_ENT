@@ -1,0 +1,2 @@
+# templates/sujet.html
+Explication simple : lorsqu'un visiteur poste, le serveur crée un edit_token (UUID) et met un cookie token_comment_<id> pour qu'il puisse ensuite coller le jeton dans les formulaires d'édition/suppression. C'est simple, pratique pour un projet étudiant. En prod → faire un système d'authentification.

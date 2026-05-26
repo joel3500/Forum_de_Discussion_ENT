@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}Forum Entrepreneuriat{% endblock %}</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+
+<!-- ===== Navbar ===== -->
+<nav class="fb-navbar">
+  <div class="fb-navbar-inner">
+    <a class="fb-brand" href="{{ url_for('index') }}">📘 UQAC Forum</a>
+    <div class="fb-nav-spacer"></div>
+    <div class="fb-nav-actions">
+      <a class="fb-nav-btn" href="{{ url_for('actualites') }}">Actualités</a>
+      {% if user %}
+        {% if user.is_admin == "yes" %}
+          <a class="fb-nav-btn" href="{{ url_for('admin_home') }}">Admin</a>
+        {% endif %}
+        <span class="fb-nav-user">{{ user.nom }}</span>
+        <a class="fb-nav-btn" href="{{ url_for('logout') }}">Déconnexion</a>
+      {% else %}
+        <a class="fb-nav-btn-primary" href="{{ url_for('login') }}">Connexion</a>
+        <a class="fb-nav-btn" href="{{ url_for('register') }}">S'inscrire</a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+<!-- ===== Bannière principale ===== -->
+{% if main_image_url %}
+<div class="fb-hero">
+  <img src="{{ url_for('static', filename=main_image_url) }}" alt="Bannière du forum">
+</div>
+{% endif %}
+
+<!-- ===== Galerie miniatures ===== -->
+{% if gallery_urls and gallery_urls|length > 0 %}
+<div class="fb-gallery-bar">
+  <div class="fb-gallery-scroll">
+    {% for img in gallery_urls %}
+      <div class="fb-gallery-tile">
+        <img src="{{ url_for('static', filename=img) }}" alt="Photo {{ loop.index }}">
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- ===== Contenu principal ===== -->
+<main class="fb-main">
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      <div class="fb-flash">
+        {% for m in messages %}<div>{{ m }}</div>{% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+  {% block content %}{% endblock %}
+</main>
+
+<!-- ===== Footer ===== -->
+<footer class="fb-footer">
+  © Tous droits réservés — Forum créé par <strong>Joel Sandé</strong>, Finissant au Bac en Informatique · UQAC
+</footer>
+
+<!-- ===== Lightbox partagée ===== -->
+<div class="fb-lightbox" id="fbLightbox" onclick="fbCloseLightbox(event)">
+  <button class="fb-lightbox-close" onclick="document.getElementById('fbLightbox').classList.remove('open')">×</button>
+  <img  id="fbLightboxImg"   class="fb-lightbox-media" src="" alt="" style="display:none">
+  <video id="fbLightboxVideo" class="fb-lightbox-media" src="" controls  style="display:none"></video>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function fbOpenLightbox(src, type) {
+  const lb  = document.getElementById('fbLightbox');
+  const img = document.getElementById('fbLightboxImg');
+  const vid = document.getElementById('fbLightboxVideo');
+  if (type === 'video') {
+    img.style.display = 'none';
+    vid.src  = src;
+    vid.style.display = 'block';
+  } else {
+    vid.style.display = 'none';
+    img.src  = src;
+    img.style.display = 'block';
+  }
+  lb.classList.add('open');
+}
+function fbCloseLightbox(e) {
+  if (e.target === document.getElementById('fbLightbox')) {
+    document.getElementById('fbLightbox').classList.remove('open');
+    const v = document.getElementById('fbLightboxVideo');
+    if (v) v.pause();
+  }
+}
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Connexion{% endblock %}
+{% block content %}
+<h3>Connexion</h3>
+<form method="post" class="row g-3" style="max-width:520px;">
+  
+  <div class="col-12">
+    <label class="form-label">Email</label>
+    <input type="email" name="email" class="form-control" required>
+  </div>
+
+  <div class="col-12">
+    <label class="form-label">Mot de passe</label>
+    <input type="password" name="mot_de_passe" class="form-control" required>
+  </div>
+
+  <div class="col-12">
+    <button class="btn btn-primary">Se connecter</button>
+    <a href="{{ url_for('register') }}" class="btn btn-link">Créer un compte</a>
+  </div>
+
+  <div class="col-12 mt-2">
+    <a href="{{ url_for('reset_password_request') }}" class="btn btn-link">Mot de passe oublié ?</a>
+  </div>
+
+
+</form>
+{% endblock %}
+
+
+
+
