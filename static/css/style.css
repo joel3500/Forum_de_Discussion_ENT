@@ -103,13 +103,14 @@ body {
 }
 
 /* ================================================================
-   HERO + GALERIE
+   HERO
    ================================================================ */
 .fb-hero {
   width: 100%;
-  height: 260px;
+  height: 280px;
   overflow: hidden;
-  background: #c9cdd4;
+  background: #1a1a2e;
+  position: relative;
 }
 .fb-hero img {
   width: 100%;
@@ -117,33 +118,74 @@ body {
   object-fit: cover;
   display: block;
 }
+.fb-hero-label {
+  position: absolute;
+  bottom: 14px;
+  left: 20px;
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 800;
+  text-shadow: 0 2px 8px rgba(0,0,0,.6);
+  letter-spacing: .3px;
+}
 
-.fb-gallery-bar {
+/* ================================================================
+   GALERIE CRÉATIVE
+   ================================================================ */
+.fb-gallery-section {
   background: var(--fb-card);
   border-bottom: 1px solid var(--fb-border);
-  padding: 6px 12px;
 }
-.fb-gallery-scroll {
-  display: flex;
-  gap: 5px;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+.fb-gallery-header {
+  padding: 10px 16px 6px;
+  font-weight: 700;
+  font-size: 13px;
+  color: var(--fb-muted);
+  text-transform: uppercase;
+  letter-spacing: .6px;
 }
-.fb-gallery-scroll::-webkit-scrollbar { display: none; }
-.fb-gallery-tile {
-  flex: 0 0 100px;
-  height: 68px;
-  border-radius: 6px;
+.fb-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+  padding-bottom: 3px;
+}
+
+/* Première image : grande (2 colonnes × 2 lignes) */
+.fb-gallery-grid .fb-gcell:first-child {
+  grid-column: span 2;
+  grid-row:    span 2;
+  height: 363px;   /* 2 × 180px + 3px gap */
+}
+.fb-gcell {
+  height: 180px;
   overflow: hidden;
-  background: #eee;
+  position: relative;
+  cursor: pointer;
+  background: #1a1a2e;
 }
-.fb-gallery-tile img {
+.fb-gcell img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform .4s ease, filter .3s ease;
 }
+.fb-gcell:hover img {
+  transform: scale(1.07);
+  filter: brightness(.78);
+}
+.fb-gcell-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  opacity: 0;
+  transition: opacity .25s;
+}
+.fb-gcell:hover .fb-gcell-overlay { opacity: 1; }
 
 /* ================================================================
    LAYOUT PRINCIPAL
@@ -580,20 +622,36 @@ body {
 /* ================================================================
    RESPONSIVE
    ================================================================ */
+@media (max-width: 900px) {
+  .fb-gallery-grid { grid-template-columns: repeat(3, 1fr); }
+  .fb-gallery-grid .fb-gcell:first-child { height: 243px; } /* 2×120+3 */
+  .fb-gcell { height: 120px; }
+}
+
 @media (max-width: 600px) {
-  .fb-hero     { height: 160px; }
+  .fb-hero         { height: 160px; }
+  .fb-hero-label   { font-size: 1rem; bottom: 8px; }
   .fb-navbar-inner { padding: 0 8px; gap: 6px; }
-  .fb-brand    { font-size: 1.1rem; }
-  .fb-nav-user { display: none; }
-  .fb-nav-btn  { padding: 5px 8px; font-size: 13px; }
+  .fb-brand        { font-size: 1.1rem; }
+  .fb-nav-user     { display: none; }
+  .fb-nav-btn      { padding: 5px 8px; font-size: 13px; }
   .fb-nav-btn-primary { padding: 5px 10px; font-size: 13px; }
-  .fb-main     { padding: 0 4px; margin-top: 10px; }
-  .fb-post-title { font-size: 15px; }
+  .fb-main         { padding: 0 4px; margin-top: 10px; }
+  .fb-post-title   { font-size: 15px; }
   .fb-media-grid.n2,
   .fb-media-grid.n3,
   .fb-media-grid.n4 { height: 200px; }
-  .fb-create-post { padding: 10px 12px 8px; }
-  .fb-replies  { padding-left: 24px; }
+  .fb-create-post  { padding: 10px 12px 8px; }
+  .fb-replies      { padding-left: 24px; }
+
+  /* Galerie mobile : 2 colonnes */
+  .fb-gallery-grid { grid-template-columns: repeat(2, 1fr); }
+  .fb-gallery-grid .fb-gcell:first-child {
+    grid-column: span 2;
+    grid-row: span 1;
+    height: 160px;
+  }
+  .fb-gcell { height: 110px; }
 }
 
 @media (max-width: 360px) {
@@ -601,4 +659,6 @@ body {
   .fb-media-grid.n2,
   .fb-media-grid.n3,
   .fb-media-grid.n4 { height: 160px; }
+  .fb-gcell { height: 90px; }
+  .fb-gallery-grid .fb-gcell:first-child { height: 130px; }
 }

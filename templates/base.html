@@ -34,16 +34,22 @@
 {% if main_image_url %}
 <div class="fb-hero">
   <img src="{{ url_for('static', filename=main_image_url) }}" alt="Bannière du forum">
+  <div class="fb-hero-label">UQAC · Forum Entrepreneuriat</div>
 </div>
 {% endif %}
 
-<!-- ===== Galerie miniatures ===== -->
+<!-- ===== Galerie créative ===== -->
 {% if gallery_urls and gallery_urls|length > 0 %}
-<div class="fb-gallery-bar">
-  <div class="fb-gallery-scroll">
+<div class="fb-gallery-section">
+  <div class="fb-gallery-header">📸 Galerie — Entrepreneuriat au Saguenay</div>
+  <div class="fb-gallery-grid">
     {% for img in gallery_urls %}
-      <div class="fb-gallery-tile">
-        <img src="{{ url_for('static', filename=img) }}" alt="Photo {{ loop.index }}">
+      <div class="fb-gcell"
+           onclick="fbOpenLightbox('{{ url_for('static', filename=img) }}', 'image')"
+           title="Photo {{ loop.index }}">
+        <img src="{{ url_for('static', filename=img) }}"
+             alt="Entrepreneuriat {{ loop.index }}" loading="lazy">
+        <div class="fb-gcell-overlay">🔍</div>
       </div>
     {% endfor %}
   </div>

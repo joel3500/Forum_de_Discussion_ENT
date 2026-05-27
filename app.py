@@ -202,22 +202,19 @@ def get_saguenay_news_daily():
     return payload
 
 def list_forum_images():
+    img_dir = os.path.join(app.static_folder, 'img')
     try:
-        names = [n for n in os.listdir(IMG_DIR) if n.lower().endswith((".jpg",".jpeg",".png",".gif"))]
+        names = [n for n in os.listdir(img_dir) if n.lower().endswith((".jpg", ".jpeg", ".png", ".gif", ".webp"))]
     except Exception:
         names = []
-    # ordre souhaité
     order = ["image_principale_ent.jpeg", "1.jpeg", "2.jpeg", "3.jpeg", "4.jpeg", "5.jpeg", "6.jpeg"]
     names_sorted = [n for n in order if n in names]
-    # ajoute les éventuels fichiers en plus, à la fin
     for n in names:
         if n not in names_sorted:
             names_sorted.append(n)
 
     main_name = "image_principale_ent.jpeg" if "image_principale_ent.jpeg" in names_sorted else (names_sorted[0] if names_sorted else None)
-    main_url = f"img/{main_name}" if main_name else None
-
-    # galerie = toutes sauf la principale
+    main_url  = f"img/{main_name}" if main_name else None
     gallery_urls = [f"img/{n}" for n in names_sorted if n != main_name]
     return main_url, gallery_urls
 
