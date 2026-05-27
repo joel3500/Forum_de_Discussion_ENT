@@ -127,21 +127,27 @@ def fetch_saguenay_news_with_openai():
     tu peux brancher un crawler et demander à l'IA de *synthétiser* le crawl.
     """
     if not oai_client:
-        # Fallback déterministe si pas de clé
+        from datetime import timedelta
+        base = now_utc_naive().replace(tzinfo=timezone.utc).astimezone(LOCAL_TZ).date()
+        d1 = (base + timedelta(days=14)).strftime("%Y-%m-%d")
+        d2 = (base + timedelta(days=30)).strftime("%Y-%m-%d")
         return {
             "items":[
-                {"title":"(DEMO) Forum Startup Saguenay", "date":"2025-10-15", "place":"Centre-ville Saguenay",
+                {"title":"(DEMO) Forum Startup Saguenay", "date": d1, "place":"Centre-ville Saguenay",
                  "description":"Rencontres entrepreneurs, kiosques, mini-pitchs.","source":"https://exemple.local"},
-                {"title":"(DEMO) Conférence PME & Investisseurs", "date":"2025-11-02", "place":"UQAC",
+                {"title":"(DEMO) Conférence PME & Investisseurs", "date": d2, "place":"UQAC",
                  "description":"Financement, mentors, réseautage 5 à 7.","source":"https://exemple.local"}
             ],
             "model":"demo-no-key"
         }
 
+    today_str = now_utc_naive().replace(tzinfo=timezone.utc).astimezone(LOCAL_TZ).strftime("%Y-%m-%d")
     prompt = (
+        f"Aujourd'hui nous sommes le {today_str}. "
         "Tu es un assistant qui dresse un bulletin quotidien des actualités et événements "
         "liés à l'entrepreneuriat au Saguenay (Québec). "
-        "Produis une liste concise (3–8 éléments max) des informations pertinentes à court terme "
+        f"Produis une liste concise (3–8 éléments max) d'événements RÉCENTS ou À VENIR "
+        f"(dates entre {today_str} et 3 mois à l'avenir), "
         "(rencontres, conférences, ateliers, foires, 5 à 7, appels à projets, incubateurs), "
         "avec ce format JSON strict:\n\n"
         "{\n"
@@ -150,6 +156,7 @@ def fetch_saguenay_news_with_openai():
         '     "description":"1-2 phrases utiles","source":"URL si connue ou vide"}\n'
         "  ]\n"
         "}\n\n"
+        "IMPORTANT: Toutes les dates doivent être égales ou postérieures à aujourd'hui. "
         "Ne mets pas de texte hors JSON. Si tu n'as pas de sources sûres, laisse source=\"\"."
     )
 
