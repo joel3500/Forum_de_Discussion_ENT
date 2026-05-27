@@ -1,0 +1,312 @@
+{% extends "base.html" %}
+{% block title %}Statistiques — Forum ENT{% endblock %}
+
+{% block content %}
+<div class="st-page">
+
+  <!-- En-tête -->
+  <div class="st-header">
+    <div>
+      <h1 class="st-title">📊 Statistiques d'utilisation</h1>
+      <p class="st-subtitle">Vue d'ensemble du Forum Entrepreneuriat · UQAC</p>
+    </div>
+    <a href="{{ url_for('index') }}" class="st-back-btn">← Forum</a>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="st-kpi-grid">
+    <div class="st-kpi st-kpi-blue">
+      <div class="st-kpi-icon">👥</div>
+      <div class="st-kpi-val">{{ nb_users }}</div>
+      <div class="st-kpi-label">Utilisateurs inscrits</div>
+    </div>
+    <div class="st-kpi st-kpi-green">
+      <div class="st-kpi-icon">💬</div>
+      <div class="st-kpi-val">{{ nb_topics }}</div>
+      <div class="st-kpi-label">Sujets publiés</div>
+    </div>
+    <div class="st-kpi st-kpi-purple">
+      <div class="st-kpi-icon">🗨️</div>
+      <div class="st-kpi-val">{{ nb_comments }}</div>
+      <div class="st-kpi-label">Commentaires</div>
+    </div>
+    <div class="st-kpi st-kpi-orange">
+      <div class="st-kpi-icon">🖼️</div>
+      <div class="st-kpi-val">{{ nb_images }}</div>
+      <div class="st-kpi-label">Images partagées</div>
+    </div>
+    <div class="st-kpi st-kpi-red">
+      <div class="st-kpi-icon">🎬</div>
+      <div class="st-kpi-val">{{ nb_videos }}</div>
+      <div class="st-kpi-label">Vidéos partagées</div>
+    </div>
+  </div>
+
+  <!-- Graphique activité 30 jours -->
+  <div class="st-card">
+    <h2 class="st-card-title">Activité des 30 derniers jours</h2>
+    <div class="st-chart-wrap">
+      <canvas id="activityChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Tableaux de classement -->
+  <div class="st-tables-grid">
+
+    <!-- Top auteurs de sujets -->
+    <div class="st-card">
+      <h2 class="st-card-title">🏆 Top auteurs de sujets</h2>
+      {% if top_topic_users %}
+      <table class="st-table">
+        <thead><tr><th>#</th><th>Utilisateur</th><th>Sujets</th></tr></thead>
+        <tbody>
+          {% for u in top_topic_users %}
+          <tr>
+            <td class="st-rank">{{ loop.index }}</td>
+            <td>{{ u.nom }}</td>
+            <td><span class="st-badge st-badge-blue">{{ u.cnt }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="st-empty">Aucun sujet pour l'instant.</p>
+      {% endif %}
+    </div>
+
+    <!-- Top commentateurs -->
+    <div class="st-card">
+      <h2 class="st-card-title">💬 Top commentateurs</h2>
+      {% if top_comment_users %}
+      <table class="st-table">
+        <thead><tr><th>#</th><th>Utilisateur</th><th>Commentaires</th></tr></thead>
+        <tbody>
+          {% for u in top_comment_users %}
+          <tr>
+            <td class="st-rank">{{ loop.index }}</td>
+            <td>{{ u.nom }}</td>
+            <td><span class="st-badge st-badge-purple">{{ u.cnt }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="st-empty">Aucun commentaire pour l'instant.</p>
+      {% endif %}
+    </div>
+
+    <!-- Sujets les plus commentés -->
+    <div class="st-card">
+      <h2 class="st-card-title">🔥 Sujets les plus commentés</h2>
+      {% if top_topics %}
+      <table class="st-table">
+        <thead><tr><th>#</th><th>Sujet</th><th>Commentaires</th></tr></thead>
+        <tbody>
+          {% for t in top_topics %}
+          <tr>
+            <td class="st-rank">{{ loop.index }}</td>
+            <td>
+              <a href="{{ url_for('view_topic', topic_id=t.id) }}" class="st-topic-link">
+                {{ t.titre|truncate(45) }}
+              </a>
+            </td>
+            <td><span class="st-badge st-badge-orange">{{ t.cnt }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="st-empty">Aucun commentaire pour l'instant.</p>
+      {% endif %}
+    </div>
+
+    <!-- Derniers inscrits -->
+    <div class="st-card">
+      <h2 class="st-card-title">🆕 Derniers inscrits</h2>
+      {% if recent_users %}
+      <table class="st-table">
+        <thead><tr><th>#</th><th>Nom</th><th>Rôle</th></tr></thead>
+        <tbody>
+          {% for u in recent_users %}
+          <tr>
+            <td class="st-rank">{{ loop.index }}</td>
+            <td>{{ u.nom }}</td>
+            <td>
+              {% if u.is_admin == 'yes' %}
+                <span class="st-badge st-badge-red">Admin</span>
+              {% else %}
+                <span class="st-badge st-badge-green">Membre</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="st-empty">Aucun utilisateur.</p>
+      {% endif %}
+    </div>
+
+  </div><!-- /st-tables-grid -->
+</div><!-- /st-page -->
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+  const labels   = {{ chart_labels|safe }};
+  const topics   = {{ chart_topics|safe }};
+  const comments = {{ chart_comments|safe }};
+
+  // Affiche seulement le mois-jour pour lisibilité
+  const shortLabels = labels.map(d => d.slice(5));
+
+  new Chart(document.getElementById('activityChart'), {
+    type: 'line',
+    data: {
+      labels: shortLabels,
+      datasets: [
+        {
+          label: 'Sujets',
+          data: topics,
+          borderColor: '#1877F2',
+          backgroundColor: 'rgba(24,119,242,.12)',
+          tension: .35,
+          fill: true,
+          pointRadius: 3,
+        },
+        {
+          label: 'Commentaires',
+          data: comments,
+          borderColor: '#9C27B0',
+          backgroundColor: 'rgba(156,33,176,.10)',
+          tension: .35,
+          fill: true,
+          pointRadius: 3,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: { stepSize: 1, precision: 0 }
+        },
+        x: {
+          ticks: {
+            maxTicksLimit: 15,
+            maxRotation: 45
+          }
+        }
+      }
+    }
+  });
+})();
+</script>
+
+<style>
+/* ===== Stats page ===== */
+.st-page { max-width: 1100px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+.st-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 1.5rem; flex-wrap: wrap; gap: .75rem;
+}
+.st-title   { font-size: 1.7rem; font-weight: 800; color: #050505; margin: 0; }
+.st-subtitle{ color: #65676B; font-size: .93rem; margin: .2rem 0 0; }
+.st-back-btn{
+  background: #f0f2f5; color: #1877F2; font-weight: 600;
+  padding: .45rem 1rem; border-radius: 8px; text-decoration: none;
+  font-size: .9rem; border: 1px solid #dddfe2;
+  transition: background .15s;
+}
+.st-back-btn:hover { background: #e4e6ea; }
+
+/* KPI grid */
+.st-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+.st-kpi {
+  border-radius: 12px; padding: 1.25rem 1rem;
+  text-align: center; color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,.12);
+}
+.st-kpi-blue   { background: linear-gradient(135deg,#1877F2,#42a5f5); }
+.st-kpi-green  { background: linear-gradient(135deg,#42B72A,#81c784); }
+.st-kpi-purple { background: linear-gradient(135deg,#9C27B0,#ba68c8); }
+.st-kpi-orange { background: linear-gradient(135deg,#F7B928,#ffcc02); color: #333; }
+.st-kpi-red    { background: linear-gradient(135deg,#E4405F,#ef9a9a); }
+.st-kpi-icon  { font-size: 1.8rem; margin-bottom: .3rem; }
+.st-kpi-val   { font-size: 2.2rem; font-weight: 800; line-height: 1; }
+.st-kpi-label { font-size: .82rem; font-weight: 600; margin-top: .3rem; opacity: .9; }
+
+/* Cards */
+.st-card {
+  background: #fff; border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+}
+.st-card-title {
+  font-size: 1.05rem; font-weight: 700; color: #1877F2;
+  margin: 0 0 1rem; padding-bottom: .6rem;
+  border-bottom: 2px solid #e4e6ea;
+}
+
+/* Chart */
+.st-chart-wrap { height: 250px; position: relative; }
+
+/* Tables grid */
+.st-tables-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+}
+.st-table { width: 100%; border-collapse: collapse; font-size: .92rem; }
+.st-table thead th {
+  background: #f0f2f5; color: #65676B;
+  font-weight: 600; font-size: .8rem; text-transform: uppercase;
+  letter-spacing: .04em; padding: .55rem .75rem; text-align: left;
+}
+.st-table tbody tr:hover { background: #f7f8fa; }
+.st-table tbody td { padding: .55rem .75rem; border-bottom: 1px solid #f0f2f5; }
+.st-rank { color: #65676B; font-weight: 700; font-size: .82rem; width: 32px; }
+.st-empty { color: #65676B; font-size: .9rem; padding: .5rem 0; }
+.st-topic-link { color: #050505; text-decoration: none; }
+.st-topic-link:hover { color: #1877F2; text-decoration: underline; }
+
+/* Badges */
+.st-badge {
+  display: inline-block; padding: .2rem .65rem;
+  border-radius: 20px; font-size: .8rem; font-weight: 700;
+}
+.st-badge-blue   { background: #e7f0fd; color: #1877F2; }
+.st-badge-purple { background: #f3e5f5; color: #9C27B0; }
+.st-badge-orange { background: #fff8e1; color: #e65100; }
+.st-badge-green  { background: #e8f5e9; color: #388E3C; }
+.st-badge-red    { background: #fce4ec; color: #c62828; }
+
+/* Responsive */
+@media (max-width: 900px) {
+  .st-kpi-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 650px) {
+  .st-kpi-grid     { grid-template-columns: 1fr 1fr; }
+  .st-tables-grid  { grid-template-columns: 1fr; }
+  .st-title        { font-size: 1.3rem; }
+}
+@media (max-width: 400px) {
+  .st-kpi-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}

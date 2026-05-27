@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}Accès Statistiques{% endblock %}
+
+{% block content %}
+<div class="stats-login-wrap">
+  <div class="stats-login-card">
+    <div class="stats-login-icon">📊</div>
+    <h2 class="stats-login-title">Statistiques d'utilisation</h2>
+    <p class="stats-login-sub">Espace réservé — entrez le mot de passe pour continuer.</p>
+
+    <form method="post" class="stats-login-form">
+      <div class="stats-login-field">
+        <label for="stats-pwd">Mot de passe</label>
+        <input id="stats-pwd" type="password" name="password"
+               class="form-control" placeholder="••••••••" required autofocus>
+      </div>
+      <button type="submit" class="stats-login-btn">Accéder aux statistiques</button>
+    </form>
+
+    <a href="{{ url_for('index') }}" class="stats-login-back">← Retour au forum</a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.stats-login-wrap {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stats-login-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 4px 24px rgba(0,0,0,.12);
+  padding: 2.5rem 2rem;
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+.stats-login-icon { font-size: 3rem; margin-bottom: .5rem; }
+.stats-login-title { font-size: 1.4rem; font-weight: 700; color: #1877F2; margin-bottom: .25rem; }
+.stats-login-sub   { color: #65676B; font-size: .93rem; margin-bottom: 1.5rem; }
+.stats-login-form  { text-align: left; }
+.stats-login-field label { font-weight: 600; font-size: .9rem; color: #050505; margin-bottom: .3rem; display: block; }
+.stats-login-btn {
+  display: block; width: 100%; margin-top: 1.25rem;
+  background: #1877F2; color: #fff; font-weight: 700;
+  border: none; border-radius: 8px; padding: .65rem;
+  font-size: 1rem; cursor: pointer; transition: background .2s;
+}
+.stats-login-btn:hover { background: #1464d8; }
+.stats-login-back {
+  display: inline-block; margin-top: 1.2rem;
+  font-size: .87rem; color: #65676B; text-decoration: none;
+}
+.stats-login-back:hover { color: #1877F2; }
+</style>
+{% endblock %}

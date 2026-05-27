@@ -9,11 +9,11 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
 
-import os, re, json, uuid
+import os, re, json, uuid, hmac
 from openai import OpenAI
 from models_0_reponses_non_recurssives import NewsCache
 from zoneinfo import ZoneInfo
-from peewee import prefetch
+from peewee import prefetch, fn
 
 
 IMG_DIR = os.environ.get("IMG_DIR", "static/img")
@@ -585,6 +585,90 @@ def reset_password_token(token):
         return redirect(url_for('login'))
 
     return render_template('reset_password_form.html', token=token, user=current_user())
+
+# ----- Statistiques (accès par mot de passe dédié) -----
+_STATS_PASSWORDS = {"Episte_Plous2025", "statsacces"}
+
+@app.route('/statslogin', methods=['GET', 'POST'])
+def stats_login():
+    if request.method == 'POST':
+        pwd = request.form.get('password', '')
+        ok = any(hmac.compare_digest(pwd.encode(), p.encode()) for p in _STATS_PASSWORDS)
+        if ok:
+            session['stats_auth'] = True
+            return redirect(url_for('stats'))
+        flash("Mot de passe incorrect.")
+    return render_template('statslogin.html', user=current_user())
+
+@app.route('/stats')
+def stats():
+    if not session.get('stats_auth'):
+        return redirect(url_for('stats_login'))
+
+    nb_users    = User.select().count()
+    nb_topics   = Topic.select().count()
+    nb_comments = Comment.select().count()
+    nb_images   = TopicMedia.select().where(TopicMedia.media_type == 'image').count()
+    nb_videos   = TopicMedia.select().where(TopicMedia.media_type == 'video').count()
+
+    top_topic_users = list(
+        User.select(User.nom, fn.COUNT(Topic.id).alias('cnt'))
+            .join(Topic, on=(Topic.user == User.id))
+            .group_by(User.id)
+            .order_by(fn.COUNT(Topic.id).desc())
+            .limit(5)
+            .namedtuples()
+    )
+    top_comment_users = list(
+        User.select(User.nom, fn.COUNT(Comment.id).alias('cnt'))
+            .join(Comment, on=(Comment.user == User.id))
+            .group_by(User.id)
+            .order_by(fn.COUNT(Comment.id).desc())
+            .limit(5)
+            .namedtuples()
+    )
+    top_topics = list(
+        Topic.select(Topic.id, Topic.titre, fn.COUNT(Comment.id).alias('cnt'))
+             .join(Comment, on=(Comment.topic == Topic.id))
+             .group_by(Topic.id)
+             .order_by(fn.COUNT(Comment.id).desc())
+             .limit(5)
+             .namedtuples()
+    )
+
+    cutoff = now_utc_naive() - timedelta(days=29)
+    daily_topics_raw = dict(
+        Topic.select(fn.DATE(Topic.created_at).alias('day'), fn.COUNT(Topic.id).alias('cnt'))
+             .where(Topic.created_at >= cutoff)
+             .group_by(fn.DATE(Topic.created_at))
+             .tuples()
+    )
+    daily_comments_raw = dict(
+        Comment.select(fn.DATE(Comment.created_at).alias('day'), fn.COUNT(Comment.id).alias('cnt'))
+               .where(Comment.created_at >= cutoff)
+               .group_by(fn.DATE(Comment.created_at))
+               .tuples()
+    )
+
+    today = now_utc_naive().date()
+    labels = [(today - timedelta(days=29 - i)).isoformat() for i in range(30)]
+    chart_topics   = [daily_topics_raw.get(d, 0) for d in labels]
+    chart_comments = [daily_comments_raw.get(d, 0) for d in labels]
+
+    recent_users = list(User.select().order_by(User.id.desc()).limit(5))
+
+    return render_template(
+        'statistiques.html',
+        user=current_user(),
+        nb_users=nb_users, nb_topics=nb_topics,
+        nb_comments=nb_comments, nb_images=nb_images, nb_videos=nb_videos,
+        top_topic_users=top_topic_users, top_comment_users=top_comment_users,
+        top_topics=top_topics, recent_users=recent_users,
+        chart_labels=json.dumps(labels),
+        chart_topics=json.dumps(chart_topics),
+        chart_comments=json.dumps(chart_comments),
+    )
+
 
 if __name__ == '__main__':
     app.run(debug=True, host="0.0.0.0", port=5000)
