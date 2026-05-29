@@ -127,7 +127,7 @@
 
     {# --- Titre & contenu --- #}
     <div class="fb-post-title">{{ s.titre }}</div>
-    <div class="fb-post-body">{{ s.contenu }}</div>
+    <div class="fb-post-body">{{ s.contenu | linkify }}</div>
 
     {# --- Médias --- #}
     {% set media_list = s.media|list %}

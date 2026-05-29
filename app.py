@@ -38,6 +38,26 @@ app.secret_key = os.environ.get("SECRET_KEY", "dev_secret_key")
 app.config['MAX_CONTENT_LENGTH'] = 40 * 1024 * 1024   # 40 Mo max par requête
 
 os.makedirs(os.path.join(app.static_folder, 'uploads'), exist_ok=True)
+
+from markupsafe import Markup, escape
+
+@app.template_filter('linkify')
+def linkify_filter(text):
+    """Converts URLs and email addresses in plain text into clickable HTML links."""
+    escaped = str(escape(text))
+    # URLs (http / https)
+    escaped = re.sub(
+        r'(https?://[^\s<>"\']+)',
+        r'<a href="\1" target="_blank" rel="noopener noreferrer">\1</a>',
+        escaped
+    )
+    # Emails
+    escaped = re.sub(
+        r'([a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,})',
+        r'<a href="mailto:\1">\1</a>',
+        escaped
+    )
+    return Markup(escaped)
 #IMAGE_DIR = os.environ.get("IMAGE_DIR", "static/images")
 #IMAGE_PRINCIPALE = os.environ.get("IMAGE_PRINCIPALE", "image_principale_ent.jpg")
 
@@ -274,7 +294,7 @@ def view_topic(topic_id):
     return render_template('sujet.html', sujet=sujet, roots=roots,
                            topic_media=topic_media, user=current_user())
 
-
+# Note : Si le cache du jour a déjà été généré, il faut utiliser le bouton "
 @app.route('/actualites')
 def actualites():
     data = get_saguenay_news_daily()
@@ -285,7 +305,7 @@ def actualites():
 # “Une fois par jour” : à la première requête quotidienne, on rafraîchit via OpenAI
 #  et on stocke. Les requêtes suivantes lisent le cache du jour.
 #  “Même info pour tous” : tout le monde lit NewsCache → contenu identique.
-#  Admin peut forcer un refresh via le bouton (utile si je veux régénérer manuellement).
+#  Admin peut forcer un refresh via le bouton (utile si je veux régénérer manuellement). Forcer un refresh" (admin) pour que le nouveau prompt prenne effet immédiatement.
 @app.route('/admin/refresh_actualites', methods=['POST'])
 def admin_refresh_actualites():
     r = admin_required()

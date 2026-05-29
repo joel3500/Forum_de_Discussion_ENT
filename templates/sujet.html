@@ -42,7 +42,7 @@
   </div>
 
   <div class="fb-post-title">{{ sujet.titre }}</div>
-  <div class="fb-post-body">{{ sujet.contenu }}</div>
+  <div class="fb-post-body">{{ sujet.contenu | linkify }}</div>
 
   {# --- Médias du sujet --- #}
   {% if topic_media and topic_media|length > 0 %}
@@ -127,7 +127,7 @@
                 <span style="font-weight:400;color:var(--fb-muted)"> · {{ node.city }}</span>
               {% endif %}
             </span>
-            <div class="fb-comment-text">{{ node.contenu }}</div>
+            <div class="fb-comment-text">{{ node.contenu | linkify }}</div>
           </div>
 
           {# Actions sous la bulle #}
